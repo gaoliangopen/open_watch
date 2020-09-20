@@ -1,9 +1,3 @@
-
-
-
-
-
-import json
 import utime
 import math
 import machine
@@ -11,13 +5,10 @@ from machine import I2C,Pin,PWM,ADC,SPI
 from ssd1306 import SSD1306_I2C
 from DS3231 import DS3231  
 from mpu6050 import mpu6050  
-from wifiSet import connect
 
-#timer_1 = [30*60,45*60,5*60,10*60,0]
-timer_1 = [0,0,0,0,0]
+timer_1 = [30*60,45*60,5*60,10*60,0]
 timer_2 = [70,0,0]
 timer_3 = [0,0,99]
-
 
 ds = DS3231()
 
@@ -43,68 +34,26 @@ k3_p13 = Pin(13,Pin.IN,Pin.PULL_UP)
 
 pwm0 = PWM(Pin(4)) # 通过Pin对象来创建PWM对象
 pwm0.freq() # 获得当前的PWM频率
-
-
 pwm0.duty(0) # 获得当前的PWM占空比
 
-
-
-
-
 device_state = 0 #设备状态
-
-
 counter_0 = 0   #用于屏保
 
-
-
-
-
 interruptCounter = 0
-
-
 def handleInterrupt(timer):
-
-
   global interruptCounter
-
-
   interruptCounter = interruptCounter+1
-
-
   
-
-
-
-
-if ds.TIME()[0] == 0:
-  msg = connect()
-  t2_date = msg[0] #日期
-  t2_time = msg[1] #时间
-  ds.DATE([int(x) for x in t2_date[2:].split('-')])   #设置初始日期年、月、日
-  ds.TIME([int(x) for x in t2_time.split(':')])   #设置初始时间时、分、秒
-"""
 timer = machine.Timer(0)  
 timer.init(period=100, mode=machine.Timer.PERIODIC, callback=handleInterrupt)
-"""
-machine.freq(20000000)     # 设置当前CPU频率    
 
+machine.freq(160000000)     # 设置当前CPU频率
 while 1:
 
-  oled.fill(0)  
+    
   if k3_p13.value() == 0:
     if counter_0 > 300:
       counter_0 = 0
-      oled.poweron()
-    else:
-      counter_0 = 300
-
-
-      oled.poweroff()
-
-
-      
-    """
     elif device_state > 0:
       oled.poweron()
       machine.freq(160000000)     # 设置当前CPU频率
@@ -115,41 +64,24 @@ while 1:
       oled.poweroff()
       machine.freq(20000000)     # 设置当前CPU频率
       device_state = 1
-    """
   
-  if device_state == 0: 
+  if device_state == 0:  
     if k1_p14.value() == 0:
-      if timer_3[0] > 0:
-        timer_3[0] = 0
-      timer_1[0] = timer_1[0] + 60*5
-      """
       timer_3[0] = timer_1[0]
       timer_3[1] = timer_1[2]
       timer_3[2] = ds.TIME()[2]
-      """
       counter_0 = 0
     
     if k2_p12.value() == 0:
-      if timer_3[0] > 0:
-        timer_3[0] = 0
-      if timer_1[0] > 0:
-        timer_1[0] = timer_1[0] - 60*5
-      """
       timer_3[0] = timer_1[1]
       timer_3[1] = timer_1[3]
       timer_3[2] = ds.TIME()[2]
-      """
       counter_0 = 0
       
 
     if k0_p27.value() == 0:
       counter_0 = 0
-      if timer_1[0] > 0:
-        timer_3[0] = timer_1[0]
-        timer_3[1] = 0
-        timer_3[2] = ds.TIME()[2]
-        timer_1[0] = 0
-      elif timer_2[0] != 70:
+      if timer_2[0] != 70:
           timer_2[0] = 70
           timer_2[1] = 0
           timer_2[2] = 0
@@ -158,7 +90,7 @@ while 1:
         timer_2[1] = ds.TIME()[1]
         timer_2[2] = ds.TIME()[2]
      
-    
+    oled.fill(0)
     
     oled.line(50,0,50,64,1) 
 
@@ -182,33 +114,14 @@ while 1:
       oled.text("CDOWN:",0, 5)
       oled.text(str(pow//60)+":"+str(pow%60),0, 15)
       if timer_3[0] == 0:
-
-        timer_1[0] = 0
-        
         pwm0.duty(100) # 设置占空比
-
-
         utime.sleep_ms(500)
-
-
         pwm0.duty(0) # 设置占空比
-
-
         
-
-
         
-
-
     elif timer_3[1] > 0:
-
-
       if timer_3[2] != ds.TIME()[2]:
-
-
         timer_3[2] = ds.TIME()[2]
-
-
         timer_3[1] = timer_3[1] - 1
       pow =timer_3[1]
       oled.text("CDOWN:",0, 5)
@@ -228,39 +141,27 @@ while 1:
         elif pow < 0:
          pow = 0 
         pow = math.floor(pow*100)
-        
-      if k2_p12.value() == 0 or k1_p14.value() == 0:
-        oled.text("CDOWN:",0, 5)
-        oled.text(str(timer_1[0]//60)+":"+str(timer_1[0]%60),0, 15)
-
-      else:
-        oled.text("POW:",0, 5)
-        oled.text(str(pow)+"%",0, 15)
+      oled.text("POW:",0, 5)
+      oled.text(str(pow)+"%",0, 15)
     
     oled.text("TEMP:", 0, 42)
-    oled.text(str(ds.TEMP()-5), 0, 52)
+    oled.text(str(ds.TEMP()), 0, 52)
 
     if counter_0 > 300:
-      
-      oled.fill(0)
-      oled.show() 
-      counter_0 = 300 
-      """
       if counter_0 > 360:
-        counter_0 = 300      
+        counter_0 = 300
+
       oled.fill(0)
-      oled.line((counter_0 - 300)*2,counter_0 - 300,(counter_0 - 299)*2,counter_0 - 300,1)
+      oled.line((counter_0 - 300)*2,counter_0 - 300,(counter_0 - 295)*2,counter_0 - 300,1)
       if ((counter_0 - 300) % 2) > 0:
         oled.fill(0)
-    """  
-    else:
-      oled.show()    
+    oled.show()    
 
     counter_0 = counter_0 + 1 
     utime.sleep_ms(500)
   
   else:
-    utime.sleep_ms(1000)
+    utime.sleep_ms(3000)
     
   #闹钟
   if ds.TIME()[0] == timer_2[0]:
@@ -269,12 +170,6 @@ while 1:
         pwm0.duty(100) # 设置占空比
         utime.sleep_ms(700)
         pwm0.duty(0) # 设置占空比   
-
-
-
-
-
-
 
 
 
