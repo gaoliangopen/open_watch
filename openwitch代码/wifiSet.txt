@@ -1,0 +1,45 @@
+
+import network
+import utime
+import urequests
+import machine
+import json
+
+
+def connect():
+  count = 0
+  t = []
+  ssid = "CMCC-d5gQ"
+  password = "betdacbf"
+  wifi = network.WLAN(network.STA_IF)
+  #判断是否已经连接，wifi.isconnected() 是Flash
+  if not wifi.isconnected():
+    print ("already connected")
+    # 激活WIFI，开始扫描周围SSID
+    wifi.active(True)
+    # 指定连接WiFi
+    wifi.connect(ssid,password)
+    while not wifi.isconnected():
+      count = count + 1
+      if count > 5:
+        return t
+      utime.sleep(1)
+    print("connect ok",wifi.ifconfig())   
+    
+  url = 'http://quan.suning.com/getSysTime.do'
+  res=urequests.get(url).text
+  print(res)
+  j=json.loads(res)
+  t.append(j['sysTime2'].split()[0]) #日期
+  t.append(j['sysTime2'].split()[1]) #时间
+  #wifi.active(False)  
+  return t
+
+          
+          
+          
+          
+          
+
+
+
